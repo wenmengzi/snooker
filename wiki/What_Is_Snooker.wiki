@@ -1,4 +1,4 @@
-#labels 司诺克,规则
+#labels 司诺克,简介
 = Introduction =
 
 司诺克台球规则简介
