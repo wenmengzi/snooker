@@ -12,7 +12,14 @@
 
 #define TP_BALL 1
 #define TP_HOLE 2
-#define MAX_NUM_OBJ 40
+#define TP_STICK 3
+#define MAX_NUM_OBJ 41
+
+#define GM_LBUTTONDOWN 1
+#define GM_MOUSEMOVE 2
+
+typedef unsigned long GState;
+#define GS_RUNNING 0x1
 
 struct FRECT
 {
@@ -49,6 +56,8 @@ struct GAMEOBJECT
 class CSnookerCore : public CGLFrame  
 {
 public:
+	void ShootWhiteBall();
+	
 	void ResetObject();
 	CSnookerCore();
 	virtual ~CSnookerCore();
@@ -59,14 +68,17 @@ public:
 
 	GAMEOBJECT gobject[MAX_NUM_OBJ];
 
+	//Game State
+	GState m_state;
 	// TEST
 	int frames;
 	DWORD startTime;
 	DWORD lastTime;
 
 private:
-	inline void DrawBall(const GAMEOBJECT *pgo);
+	inline void DrawBall(const GAMEOBJECT *pball);
 	inline void DrawTable();
+	inline void DrawStick(const GAMEOBJECT *pstick);
 	inline void SetLight();
 
 	float PhysicalProcess();

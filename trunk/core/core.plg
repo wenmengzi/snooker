@@ -6,6 +6,34 @@
 --------------------Configuration: core - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\Admin\LOCALS~1\Temp\RSP329.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Release/" /Fp"Release/core.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"F:\snooker\core\coreDlg.cpp"
+"F:\snooker\core\SnookerCore.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\Admin\LOCALS~1\Temp\RSP329.tmp" 
+Creating temporary file "C:\DOCUME~1\Admin\LOCALS~1\Temp\RSP32A.tmp" with contents
+[
+/nologo /subsystem:windows /incremental:no /pdb:"Release/core.pdb" /machine:I386 /out:"Release/core.exe" 
+.\Release\ArgSettingDlg.obj
+.\Release\core.obj
+.\Release\coreDlg.obj
+.\Release\GLFrame.obj
+.\Release\SnookerCore.obj
+.\Release\StdAfx.obj
+.\Release\core.res
+]
+Creating command line "link.exe @C:\DOCUME~1\Admin\LOCALS~1\Temp\RSP32A.tmp"
+<h3>Output Window</h3>
+Compiling...
+coreDlg.cpp
+SnookerCore.cpp
+Generating Code...
+Linking...
+Creating command line "bscmake.exe /nologo /o"Release/core.bsc"  .\Release\StdAfx.sbr .\Release\ArgSettingDlg.sbr .\Release\core.sbr .\Release\coreDlg.sbr .\Release\GLFrame.sbr .\Release\SnookerCore.sbr"
+Creating browse info file...
+<h3>Output Window</h3>
 
 
 
