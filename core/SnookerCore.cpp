@@ -23,7 +23,7 @@ float GAMEOBJECT::k1=0.05f;
 float GAMEOBJECT::k2=0.04f;
 FRECT GAMEOBJECT::tableface={-1.085f,0.53f,1.085f,-0.53f};
 float GAMEOBJECT::alpha1=0.00001f;
-float GAMEOBJECT::alpha2=0.000009f;
+float GAMEOBJECT::alpha2=0.000395f;
 float GAMEOBJECT::auz=0.0005f;
 float GAMEOBJECT::vmax=0.006f;
 int GAMEOBJECT::PPF=8;
@@ -39,6 +39,7 @@ CSnookerCore::CSnookerCore()
 	}
 	fclose(ftable);
 	ResetObject();
+	m_state=0;
 	startTime=lastTime=GetTickCount();
 	frames=0;
 }
@@ -56,7 +57,7 @@ LRESULT CSnookerCore::PostGameMessage(UINT GMsg, WPARAM wParam, LPARAM lParam)
 void CSnookerCore::OnCreate()
 {
 	glClearColor(0.0f,0.2f,0.0f,1.0f);
-	int listi=glGenLists(2);
+	int listi=glGenLists(3);
 	glListBase(listi);
 	glNewList(listi,GL_COMPILE);
 		//glScalef(BALL_RAD,BALL_RAD,BALL_RAD);
@@ -112,6 +113,28 @@ void CSnookerCore::OnCreate()
 		glEnd();
 		glDisable(GL_TEXTURE_2D);
 	glEndList();
+
+	glNewList(listi+2,GL_COMPILE);
+		glEnable(GL_TEXTURE_2D);
+		glShadeModel(GL_SMOOTH);
+		float r1=0.008f,r2=0.016f;
+		glBegin(GL_QUAD_STRIP);
+#define MAX 10
+		for(i=0;i<MAX;++i)
+		{
+			q=pi*i/MAX;
+			//glColor4f(1.0f,0,0,1.0f);
+			glTexCoord2f(0.755859375f+0.021484375f*i/MAX,0.810546875f);
+			glNormal3f(-0.029f,r1*cosf(q),r1*sinf(q));
+			glVertex3f(-0.029f,r1*cosf(q),r1*sinf(q));
+			glTexCoord2f(0.755859375f+0.021484375f*i/MAX,0.0f);
+			glNormal3f(-1.0f,r2*cosf(q),r2*sinf(q));
+			glVertex3f(-1.0f,r2*cosf(q),r2*sinf(q));
+		}
+		glEnd();
+		glDisable(GL_TEXTURE_2D);
+	glEndList();
+
 	glShadeModel(GL_SMOOTH);
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	glEnable(GL_NORMALIZE);
@@ -120,7 +143,6 @@ void CSnookerCore::OnCreate()
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-//	DrawTable();
 }
 
 void CSnookerCore::OnPaint()
@@ -128,8 +150,29 @@ void CSnookerCore::OnPaint()
 	int i;
 	DWORD now=GetTickCount();
 	int PPF=GAMEOBJECT::PPF*(now-lastTime)/14;
-	for(i=0;i<PPF;++i)
-		PhysicalProcess();
+	if(m_state & GS_RUNNING)
+	{
+		for(i=0;i<PPF;++i)
+		{
+			if(PhysicalProcess()<GAMEOBJECT::alpha2)
+				break;
+		}
+		if(i<PPF)
+		{
+			m_state&=~GS_RUNNING;
+			for(i=0;i<22;++i)
+			{
+				gobject[i].vx=0;
+				gobject[i].vy=0;
+				gobject[i].rvx=0;
+				gobject[i].rvy=0;
+				gobject[i].rvz=0;
+			}
+			gobject[40].x=gobject[0].x;
+			gobject[40].y=gobject[0].y;
+			gobject[40].radius=0;
+		}
+	}
 	lastTime=now;
 	++frames;
 	glTranslatef(0.0f,0.0f,-6.0f);
@@ -141,6 +184,12 @@ void CSnookerCore::OnPaint()
 		{
 			glPushMatrix();
 			DrawBall(gobject+i);
+			glPopMatrix();
+		}
+		if(!(m_state && GS_RUNNING))
+		{
+			glPushMatrix();
+			DrawStick(gobject+40);
 			glPopMatrix();
 		}
 	glPopMatrix();
@@ -196,6 +245,12 @@ void CSnookerCore::ResetObject()
 		gobject[i].rvy=0;
 		gobject[i].rvz=0;
 	}
+	//ÉèÖÃÇò¸Ë
+	gobject[40].type=TP_STICK;
+	gobject[40].radius=0.0f;
+	gobject[40].x=gobject[0].x;
+	gobject[40].y=gobject[0].y;
+	gobject[40].rvx=0.0f;
 }
 
 void CSnookerCore::SetLight()
@@ -250,11 +305,11 @@ void CSnookerCore::SetLight()
 	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,mShininess);
 }
 
-inline void CSnookerCore::DrawBall(const GAMEOBJECT *pgo)
+inline void CSnookerCore::DrawBall(const GAMEOBJECT *pball)
 {
-	glTranslatef(pgo->x,pgo->y,0.0f);
-	glScalef(pgo->radius,pgo->radius,pgo->radius);
-	glColor4f(pgo->color_r,pgo->color_g,pgo->color_b,pgo->color_a);
+	glTranslatef(pball->x,pball->y,0.0f);
+	glScalef(pball->radius,pball->radius,pball->radius);
+	glColor4f(pball->color_r,pball->color_g,pball->color_b,pball->color_a);
 	glCallList(1);
 }
 
@@ -383,4 +438,22 @@ float CSnookerCore::PhysicalProcess()
 		gobject[i].y+=gobject[i].vy;
 	}
 	return sigmav;
+}
+
+inline void CSnookerCore::DrawStick(const GAMEOBJECT *pstick)
+{
+	glTranslatef(pstick->x,pstick->y,0);
+	glRotatef(pstick->rvx,0,0,1.0f);
+	glTranslatef(-pstick->radius,0,0);
+	glCallList(3);
+}
+
+void CSnookerCore::ShootWhiteBall()
+{
+	if(m_state & GS_RUNNING)
+		return;
+	float v=0.006f*gobject[40].radius/0.5f;
+	gobject[0].vx=v*cosf(gobject[40].rvx*0.01745329252f);
+	gobject[0].vy=v*sinf(gobject[40].rvx*0.01745329252f);
+	m_state|=GS_RUNNING;
 }

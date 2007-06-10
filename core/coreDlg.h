@@ -44,11 +44,13 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 private:
 	CSnookerCore m_snooker;
 	int sel;
+	float lastradius;
 };
 
 //{{AFX_INSERT_LOCATION}}
