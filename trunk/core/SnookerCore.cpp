@@ -64,10 +64,10 @@ void CSnookerCore::OnCreate()
 		const float pi=3.14159265359f;
 		//glColor4f(0.0f,0.0f,1.0f,1.0f);
 		float r=0.0f,nr=0.0f,q=0.0f,x,y,z;
-		for(int i=1;i<=6;++i)
+		for(int i=1;i<=10;++i)
 		{
 			r=nr;
-			nr=pi*i/6;
+			nr=pi*i/10;
 			glBegin(GL_QUAD_STRIP);
 			for(int j=0;j<=10;++j)
 			{
@@ -171,6 +171,7 @@ void CSnookerCore::OnPaint()
 			gobject[40].x=gobject[0].x;
 			gobject[40].y=gobject[0].y;
 			gobject[40].radius=0;
+			RenewStick();
 		}
 	}
 	lastTime=now;
@@ -182,15 +183,11 @@ void CSnookerCore::OnPaint()
 	glPushMatrix();
 		for(i=0;i<22;++i)
 		{
-			glPushMatrix();
 			DrawBall(gobject+i);
-			glPopMatrix();
 		}
 		if(!(m_state && GS_RUNNING))
 		{
-			glPushMatrix();
 			DrawStick(gobject+40);
-			glPopMatrix();
 		}
 	glPopMatrix();
 }
@@ -251,6 +248,13 @@ void CSnookerCore::ResetObject()
 	gobject[40].x=gobject[0].x;
 	gobject[40].y=gobject[0].y;
 	gobject[40].rvx=0.0f;
+	//设置虚白球
+	gobject[41].color_r=1.0f;
+	gobject[41].color_g=1.0f;
+	gobject[41].color_b=1.0f;
+	gobject[41].color_a=1.0f;
+	gobject[41].radius=0.029f;
+	RenewStick();
 }
 
 void CSnookerCore::SetLight()
@@ -276,7 +280,7 @@ void CSnookerCore::SetLight()
 	lSpe[0]=1.0f;	lSpe[1]=1.0f;
 	lSpe[2]=1.0f;	lSpe[3]=1.0f;
 
-	lPos[0]=-4.0f;	lPos[1]=0.0f;
+	lPos[0]=0.0f;	lPos[1]=0.0f;
 	lPos[2]=3.0f;	lPos[3]=1.0f;
 
 	mAmb[0]=0.2f;	mAmb[1]=0.2f;
@@ -307,15 +311,19 @@ void CSnookerCore::SetLight()
 
 inline void CSnookerCore::DrawBall(const GAMEOBJECT *pball)
 {
+	glPushMatrix();
 	glTranslatef(pball->x,pball->y,0.0f);
 	glScalef(pball->radius,pball->radius,pball->radius);
 	glColor4f(pball->color_r,pball->color_g,pball->color_b,pball->color_a);
 	glCallList(1);
+	glPopMatrix();
 }
 
 inline void CSnookerCore::DrawTable()
 {
+	glPushMatrix();
 	glCallList(2);
+	glPopMatrix();
 }
 
 float CSnookerCore::PhysicalProcess()
@@ -442,10 +450,24 @@ float CSnookerCore::PhysicalProcess()
 
 inline void CSnookerCore::DrawStick(const GAMEOBJECT *pstick)
 {
+	glPushMatrix();
 	glTranslatef(pstick->x,pstick->y,0);
 	glRotatef(pstick->rvx,0,0,1.0f);
 	glTranslatef(-pstick->radius,0,0);
 	glCallList(3);
+	glPopMatrix();
+	DrawBall(gobject+41);
+	glEnable(GL_LINE_STIPPLE);
+	glLineStipple(1,0x00FF);
+	glPushMatrix();
+	
+	glLineWidth(1.0f);
+	glBegin(GL_LINES);
+		glVertex2f(pstick->x,pstick->y);
+		glVertex2f(gobject[41].x,gobject[41].y);
+	glEnd();
+	glPopMatrix();
+	glDisable(GL_LINE_STIPPLE);
 }
 
 void CSnookerCore::ShootWhiteBall()
@@ -456,4 +478,29 @@ void CSnookerCore::ShootWhiteBall()
 	gobject[0].vx=v*cosf(gobject[40].rvx*0.01745329252f);
 	gobject[0].vy=v*sinf(gobject[40].rvx*0.01745329252f);
 	m_state|=GS_RUNNING;
+}
+
+void CSnookerCore::RenewStick()
+{
+	float lx=cosf(gobject[40].rvx*0.01745329252f);
+	float ly=sinf(gobject[40].rvx*0.01745329252f);
+	float mint=1000.0f;
+	for(int i=1;i<22;++i)
+	{
+		float l1x=gobject[i].x-gobject[0].x;
+		float l1y=gobject[i].y-gobject[0].y;
+		float t=lx*l1x+ly*l1y;
+		if(t<=0)
+			continue;
+		float d2=(l1x-t*lx)*(l1x-t*lx)+(l1y-t*ly)*(l1y-t*ly);
+		if(d2>=0.003364f)
+			continue;
+		else
+			d2*=1000000.0f; // 提高精确度
+		float tp=t-sqrtf(3364.0f-d2)/1000.0f;
+		if(tp<mint)
+			mint=tp;
+	}
+	gobject[41].x=gobject[0].x+mint*lx;
+	gobject[41].y=gobject[0].y+mint*ly;
 }
