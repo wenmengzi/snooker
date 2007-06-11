@@ -13,7 +13,7 @@
 #define TP_BALL 1
 #define TP_HOLE 2
 #define TP_STICK 3
-#define MAX_NUM_OBJ 41
+#define MAX_NUM_OBJ 42
 
 #define GM_LBUTTONDOWN 1
 #define GM_MOUSEMOVE 2
@@ -56,6 +56,7 @@ struct GAMEOBJECT
 class CSnookerCore : public CGLFrame  
 {
 public:
+	void RenewStick();
 	void ShootWhiteBall();
 	
 	void ResetObject();

@@ -185,6 +185,7 @@ void CCoreDlg::OnMouseMove(UINT nFlags, CPoint point)
 				m_snooker.gobject[sel].rvx=acosf(-dx/rp)*57.2957795129f;
 			else
 				m_snooker.gobject[sel].rvx=-acosf(-dx/rp)*57.2957795129f;
+			m_snooker.RenewStick();
 		}
 	}
 	else if(nFlags==MK_RBUTTON)
@@ -201,6 +202,7 @@ void CCoreDlg::OnMouseMove(UINT nFlags, CPoint point)
 			float rp=sqrtf(dx*dx+dy*dy);
 			if(rp>lastradius)
 				m_snooker.gobject[sel].radius=rp-lastradius;
+			m_snooker.RenewStick();
 		}
 	}
 	CDialog::OnMouseMove(nFlags, point);
