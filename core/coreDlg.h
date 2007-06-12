@@ -50,7 +50,6 @@ protected:
 private:
 	CSnookerCore m_snooker;
 	int sel;
-	float lastradius;
 };
 
 //{{AFX_INSERT_LOCATION}}
