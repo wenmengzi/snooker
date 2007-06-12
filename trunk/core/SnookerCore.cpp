@@ -424,6 +424,8 @@ float CSnookerCore::PhysicalProcess()
 		{
 			if(j==i)
 				continue;
+			if(!gobject[i].alive)
+				continue;
 			float dx=gobject[j].x-gobject[i].x;
 			float dy=gobject[j].y-gobject[i].y;
 			float ds=sqrtf(dx*dx+dy*dy);
