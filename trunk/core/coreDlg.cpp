@@ -161,83 +161,18 @@ void CCoreDlg::OnOK()
 void CCoreDlg::OnMouseMove(UINT nFlags, CPoint point) 
 {
 	// TODO: Add your message handler code here and/or call default
-	float fx=-1.114f+(point.x-27)*2.228f/719.0f;
-	float fy=0.559f-(point.y-27)*1.118f/360.0f;
-	if(nFlags==MK_LBUTTON)
-	{
-		if(sel<0 || sel >MAX_NUM_OBJ)
-		{
-			CDialog::OnMouseMove(nFlags, point);
-			return;
-		}
-		if(m_snooker.gobject[sel].type==TP_BALL)
-		{
-			m_snooker.gobject[sel].x=fx;
-			m_snooker.gobject[sel].y=fy;
-			Invalidate(FALSE);
-		}
-		else if(m_snooker.gobject[sel].type==TP_STICK)
-		{
-			float dx=fx-m_snooker.gobject[40].x;
-			float dy=fy-m_snooker.gobject[40].y;
-			float rp=sqrtf(dx*dx+dy*dy);
-			if(dy<0)
-				m_snooker.gobject[sel].rvx=acosf(-dx/rp)*57.2957795129f;
-			else
-				m_snooker.gobject[sel].rvx=-acosf(-dx/rp)*57.2957795129f;
-			m_snooker.RenewStick();
-		}
-	}
-	else if(nFlags==MK_RBUTTON)
-	{
-		if(sel<0 || sel >MAX_NUM_OBJ)
-		{
-			CDialog::OnMouseMove(nFlags, point);
-			return;
-		}
-		if(m_snooker.gobject[sel].type==TP_STICK)
-		{
-			float dx=fx-m_snooker.gobject[40].x;
-			float dy=fy-m_snooker.gobject[40].y;
-			float rp=sqrtf(dx*dx+dy*dy);
-			if(rp>lastradius)
-				m_snooker.gobject[sel].radius=rp-lastradius;
-			m_snooker.RenewStick();
-		}
-	}
+	float gx=-1.114f+(point.x-27)*2.228f/719.0f;
+	float gy=0.559f-(point.y-27)*1.118f/360.0f;
+	m_snooker.OnMouseMove(nFlags,gx,gy);
 	CDialog::OnMouseMove(nFlags, point);
 }
 
 void CCoreDlg::OnLButtonDown(UINT nFlags, CPoint point) 
 {
 	// TODO: Add your message handler code here and/or call default
-	float fx=-1.114f+(point.x-27)*2.228f/719.0f;
-	float fy=0.559f-(point.y-27)*1.118f/360.0f;
-
-	//ÏÈÅÐ¶ÏÇò¸Ë
-	float dx=fx-m_snooker.gobject[40].x;
-	float dy=fy-m_snooker.gobject[40].y;
-	float rp=sqrtf(dx*dx+dy*dy);
-	float xp=-rp*cosf(m_snooker.gobject[40].rvx*0.01745329252f);
-	float yp=-rp*sinf(m_snooker.gobject[40].rvx*0.01745329252f);
-	if(rp>m_snooker.gobject[40].radius+0.029f && rp<m_snooker.gobject[40].radius+1.0f && 
-		(dx-xp)*(dx-xp)+(dy-yp)*(dy-yp)<0.000256f)
-	{
-		sel=40;
-		lastradius=rp-0.029f;
-	}
-	else
-	{
-		for(int i=0;i<22;++i)
-		{
-			if(fabsf(m_snooker.gobject[i].x-fx)<0.029f &&
-				fabsf(m_snooker.gobject[i].y-fy)<0.029f)
-			{
-				break;
-			}
-		}
-		sel=i;
-	}
+	float gx=-1.114f+(point.x-27)*2.228f/719.0f;
+	float gy=0.559f-(point.y-27)*1.118f/360.0f;
+	m_snooker.OnLButtonDown(nFlags,gx,gy);
 	CDialog::OnLButtonDown(nFlags, point);
 }
 
@@ -246,26 +181,15 @@ void CCoreDlg::OnRButtonUp(UINT nFlags, CPoint point)
 	// TODO: Add your message handler code here and/or call default
 
 	// give white ball a speed and game start
-	m_snooker.ShootWhiteBall();
+	m_snooker.OnRButtonUp(nFlags,0,0);
 	CDialog::OnRButtonUp(nFlags, point);
 }
 
 void CCoreDlg::OnRButtonDown(UINT nFlags, CPoint point) 
 {
 	// TODO: Add your message handler code here and/or call default
-	float fx=-1.114f+(point.x-27)*2.228f/719.0f;
-	float fy=0.559f-(point.y-27)*1.118f/360.0f;
-	//ÏÈÅÐ¶ÏÇò¸Ë
-	float dx=fx-m_snooker.gobject[40].x;
-	float dy=fy-m_snooker.gobject[40].y;
-	float rp=sqrtf(dx*dx+dy*dy);
-	float xp=-rp*cosf(m_snooker.gobject[40].rvx*0.01745329252f);
-	float yp=-rp*sinf(m_snooker.gobject[40].rvx*0.01745329252f);
-	if(rp>m_snooker.gobject[40].radius+0.029f && rp<m_snooker.gobject[40].radius+1.0f && 
-		(dx-xp)*(dx-xp)+(dy-yp)*(dy-yp)<0.000256f)
-	{
-		sel=40;
-		lastradius=rp-0.029f;
-	}
+	float gx=-1.114f+(point.x-27)*2.228f/719.0f;
+	float gy=0.559f-(point.y-27)*1.118f/360.0f;
+	m_snooker.OnRButtonDown(nFlags,gx,gy);
 	CDialog::OnRButtonDown(nFlags, point);
 }

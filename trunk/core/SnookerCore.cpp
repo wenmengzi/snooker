@@ -22,6 +22,15 @@ float GAMEOBJECT::u2=1.0f;
 float GAMEOBJECT::k1=0.05f;
 float GAMEOBJECT::k2=0.04f;
 FRECT GAMEOBJECT::tableface={-1.085f,0.53f,1.085f,-0.53f};
+FRECT GAMEOBJECT::besidehole[6]={
+	{-1.085f,0.53f,-1.061321f,0.506206f},
+	{-1.085f,-0.506206f,-1.061321f,-0.53f},
+	{-0.038734f,0.53f,0.038734f,0.501f},
+	{-0.038734f,-0.501f,0.038734f,-0.53f},
+	{1.061321f,0.53f,1.085f,0.506206f},
+	{1.061321f,-0.506206f,1.085f,-0.53f}
+};
+
 float GAMEOBJECT::alpha1=0.00001f;
 float GAMEOBJECT::alpha2=0.000395f;
 float GAMEOBJECT::auz=0.0005f;
@@ -42,6 +51,7 @@ CSnookerCore::CSnookerCore()
 	m_state=0;
 	startTime=lastTime=GetTickCount();
 	frames=0;
+	sel=0;
 }
 
 CSnookerCore::~CSnookerCore()
@@ -183,7 +193,8 @@ void CSnookerCore::OnPaint()
 	glPushMatrix();
 		for(i=0;i<22;++i)
 		{
-			DrawBall(gobject+i);
+			if(gobject[i].alive)
+				DrawBall(gobject+i);
 		}
 		if(!(m_state && GS_RUNNING))
 		{
@@ -221,6 +232,26 @@ void CSnookerCore::ResetObject()
 		gobject[i].score=t;
 		gobject[i].alive=TRUE;
 	}
+	for(;i<34;++i)
+	{
+		gobject[i].type=TP_HOLE;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].x=tmp;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].y=tmp;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].radius=tmp;
+	}
+	for(;i<40;++i)
+	{
+		gobject[i].type=TP_HOLE;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].x=tmp;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].y=tmp;
+		fscanf(finit,"%f",&tmp);
+		gobject[i].radius=tmp;
+	}
 	fclose(finit);
 	for(;i<MAX_NUM_OBJ;++i)
 	{
@@ -254,6 +285,10 @@ void CSnookerCore::ResetObject()
 	gobject[41].color_b=1.0f;
 	gobject[41].color_a=1.0f;
 	gobject[41].radius=0.029f;
+	//设置12个袋边对象
+	gobject[22].x=-1.085f;
+	gobject[22].y=0.506206f;
+	gobject[22].radius=0;
 	RenewStick();
 }
 
@@ -382,8 +417,10 @@ float CSnookerCore::PhysicalProcess()
 	// 碰撞过程
 	for(i=0;i<22;++i)
 	{
+		if(!gobject[i].alive)
+			continue;
 		//球与球的碰撞
-		for(j=0;j<34;++j)
+		for(j=0;j<40;++j)
 		{
 			if(j==i)
 				continue;
@@ -393,6 +430,11 @@ float CSnookerCore::PhysicalProcess()
 			float dc=gobject[i].radius+gobject[j].radius-ds;
 			if(dc>0.0f)
 			{
+				if(j>33) // 进袋
+				{
+					gobject[i].alive=FALSE;
+					break;
+				}
 				float ak1x=dx*GAMEOBJECT::k1*dc/ds;
 				float ak1y=dy*GAMEOBJECT::k1*dc/ds;
 				gobject[i].ax-=ak1x;
@@ -403,7 +445,9 @@ float CSnookerCore::PhysicalProcess()
 			}
 		}
 		//球与桌边的碰撞
-		if(gobject[i].x<GAMEOBJECT::tableface.left)
+		if(gobject[i].x<GAMEOBJECT::tableface.left
+			&& gobject[i].y<GAMEOBJECT::besidehole[0].bottom
+			&& gobject[i].y>GAMEOBJECT::besidehole[1].top)
 		{
 			gobject[i].x=GAMEOBJECT::tableface.left;
 			gobject[i].rvy-=1.5f*gobject[i].vx;
@@ -411,7 +455,9 @@ float CSnookerCore::PhysicalProcess()
 			//碰撞对滚动的影响
 			gobject[i].vy+=gobject[i].rvz;
 		}
-		else if(gobject[i].x>GAMEOBJECT::tableface.right)
+		else if(gobject[i].x>GAMEOBJECT::tableface.right
+			&& gobject[i].y<GAMEOBJECT::besidehole[4].bottom
+			&& gobject[i].y>GAMEOBJECT::besidehole[5].top)
 		{
 			gobject[i].x=GAMEOBJECT::tableface.right;
 			gobject[i].rvy-=1.5f*gobject[i].vx;
@@ -419,7 +465,13 @@ float CSnookerCore::PhysicalProcess()
 			//碰撞对滚动的影响
 			gobject[i].vy-=gobject[i].rvz;
 		}
-		if(gobject[i].y>GAMEOBJECT::tableface.top)
+		if(gobject[i].y>GAMEOBJECT::tableface.top
+			&& (
+			(gobject[i].x>GAMEOBJECT::besidehole[0].right && gobject[i].x<GAMEOBJECT::besidehole[2].left)
+			||
+			(gobject[i].x>GAMEOBJECT::besidehole[2].right && gobject[i].x<GAMEOBJECT::besidehole[4].left)
+			)
+			)
 		{
 			gobject[i].y=GAMEOBJECT::tableface.top;
 			gobject[i].rvx+=1.5f*gobject[i].vy;
@@ -427,7 +479,13 @@ float CSnookerCore::PhysicalProcess()
 			//碰撞对滚动的影响
 			gobject[i].vx+=gobject[i].rvz;
 		}
-		else if(gobject[i].y<GAMEOBJECT::tableface.bottom)
+		else if(gobject[i].y<GAMEOBJECT::tableface.bottom
+			&& (
+			(gobject[i].x>GAMEOBJECT::besidehole[1].right && gobject[i].x<GAMEOBJECT::besidehole[3].left)
+			||
+			(gobject[i].x>GAMEOBJECT::besidehole[3].right && gobject[i].x<GAMEOBJECT::besidehole[5].left)
+			)
+			)
 		{
 			gobject[i].y=GAMEOBJECT::tableface.bottom;
 			gobject[i].rvx+=1.5f*gobject[i].vy;
@@ -503,4 +561,101 @@ void CSnookerCore::RenewStick()
 	}
 	gobject[41].x=gobject[0].x+mint*lx;
 	gobject[41].y=gobject[0].y+mint*ly;
+}
+
+void CSnookerCore::OnLButtonDown(UINT nFlags, float x, float y)
+{
+	//先判断球杆
+	float dx=x-gobject[40].x;
+	float dy=y-gobject[40].y;
+	float rp=sqrtf(dx*dx+dy*dy);
+	float xp=-rp*cosf(gobject[40].rvx*0.01745329252f);
+	float yp=-rp*sinf(gobject[40].rvx*0.01745329252f);
+	if(rp>gobject[40].radius+0.029f && rp<gobject[40].radius+1.0f && 
+		(dx-xp)*(dx-xp)+(dy-yp)*(dy-yp)<0.000256f)
+	{
+		sel=40;
+		lastradius=rp-0.029f;
+	}
+	else
+	{
+		for(int i=0;i<22;++i)
+		{
+			if(fabsf(gobject[i].x-x)<0.029f &&
+				fabsf(gobject[i].y-y)<0.029f)
+			{
+				break;
+			}
+		}
+		sel=i;
+	}
+}
+
+void CSnookerCore::OnLButtonUp(UINT nFlags, float x, float y)
+{
+}
+
+void CSnookerCore::OnRButtonDown(UINT nFlags, float x, float y)
+{
+	//先判断球杆
+	float dx=x-gobject[40].x;
+	float dy=y-gobject[40].y;
+	float rp=sqrtf(dx*dx+dy*dy);
+	float xp=-rp*cosf(gobject[40].rvx*0.01745329252f);
+	float yp=-rp*sinf(gobject[40].rvx*0.01745329252f);
+	if(rp>gobject[40].radius+0.029f && rp<gobject[40].radius+1.0f && 
+		(dx-xp)*(dx-xp)+(dy-yp)*(dy-yp)<0.000256f)
+	{
+		sel=40;
+		lastradius=rp-0.029f;
+	}
+}
+
+void CSnookerCore::OnRButtonUp(UINT nFlags, float x, float y)
+{
+	// give white ball a speed and game start
+	ShootWhiteBall();
+}
+
+void CSnookerCore::OnMouseMove(UINT nFlags, float x, float y)
+{
+	if(nFlags==MK_LBUTTON)
+	{
+		if(sel<0 || sel >MAX_NUM_OBJ)
+		{
+			return;
+		}
+		if(gobject[sel].type==TP_BALL)
+		{
+			gobject[sel].x=x;
+			gobject[sel].y=y;
+		}
+		else if(gobject[sel].type==TP_STICK)
+		{
+			float dx=x-gobject[40].x;
+			float dy=y-gobject[40].y;
+			float rp=sqrtf(dx*dx+dy*dy);
+			if(dy<0)
+				gobject[sel].rvx=acosf(-dx/rp)*57.2957795129f;
+			else
+				gobject[sel].rvx=-acosf(-dx/rp)*57.2957795129f;
+			RenewStick();
+		}
+	}
+	else if(nFlags==MK_RBUTTON)
+	{
+		if(sel<0 || sel >MAX_NUM_OBJ)
+		{
+			return;
+		}
+		if(gobject[sel].type==TP_STICK)
+		{
+			float dx=x-gobject[40].x;
+			float dy=y-gobject[40].y;
+			float rp=sqrtf(dx*dx+dy*dy);
+			if(rp>lastradius)
+				gobject[sel].radius=rp-lastradius;
+			RenewStick();
+		}
+	}
 }

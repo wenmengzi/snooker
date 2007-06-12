@@ -68,9 +68,18 @@ public:
 	void OnPaint();
 
 	GAMEOBJECT gobject[MAX_NUM_OBJ];
+	//Control Message
+	void OnLButtonDown(UINT nFlags, float x, float y);
+	void OnLButtonUp(UINT nFlags, float x, float y);
+	void OnRButtonDown(UINT nFlags, float x, float y);
+	void OnRButtonUp(UINT nFlags, float x, float y);
+	void OnMouseMove(UINT nFlags, float x, float y);
+	
 
 	//Game State
 	GState m_state;
+	int sel;
+	float lastradius;
 	// TEST
 	int frames;
 	DWORD startTime;
